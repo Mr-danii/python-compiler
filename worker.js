@@ -2,10 +2,10 @@
 console.log('Worker starting...');
 
 // Import the libraries
-importScripts('http://68.183.142.239/python-compiler/node_modules/comlink/dist/umd/comlink.js');
-importScripts('http://68.183.142.239/python-compiler/node_modules/comsync/dist/index.js');
-importScripts('http://68.183.142.239/python-compiler/node_modules/sync-message/dist/index.js');
-importScripts('http://68.183.142.239/python-compiler/node_modules/pyodide-worker-runner/dist/index.js');
+importScripts('https://68.183.142.239/python-compiler/node_modules/comlink/dist/umd/comlink.js');
+importScripts('https://68.183.142.239/python-compiler/node_modules/comsync/dist/index.js');
+importScripts('https://68.183.142.239/python-compiler/node_modules/sync-message/dist/index.js');
+importScripts('https://68.183.142.239/python-compiler/node_modules/pyodide-worker-runner/dist/index.js');
 importScripts('https://cdn.jsdelivr.net/pyodide/v0.28.1/full/pyodide.js');
 
 console.log('Worker scripts loaded');

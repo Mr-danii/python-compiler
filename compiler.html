@@ -688,10 +688,10 @@ Run your Python code to see output and interact with input() prompts here!"></te
     </div>
 
     <!-- Load the npm modules in correct dependency order -->
-    <script src="http://68.183.142.239/python-compiler/node_modules/comlink/dist/umd/comlink.js"></script>
-    <script src="http://68.183.142.239/python-compiler/node_modules/sync-message/dist/index.js"></script>
-    <script src="http://68.183.142.239/python-compiler/node_modules/comsync/dist/index.js"></script>
-    <script src="http://68.183.142.239/python-compiler/node_modules/pyodide-worker-runner/dist/index.js"></script>
+    <script src="https://68.183.142.239/python-compiler/node_modules/comlink/dist/umd/comlink.js"></script>
+    <script src="https://68.183.142.239/python-compiler/node_modules/sync-message/dist/index.js"></script>
+    <script src="https://68.183.142.239/python-compiler/node_modules/comsync/dist/index.js"></script>
+    <script src="https://68.183.142.239/python-compiler/node_modules/pyodide-worker-runner/dist/index.js"></script>
 
     <script>
         // Global variables
@@ -728,7 +728,7 @@ Run your Python code to see output and interact with input() prompts here!"></te
                 console.log('Setting up sync message system...');
 
                 // Register the service worker with better error handling
-                const registration = await navigator.serviceWorker.register('http://68.183.142.239/python-compiler/sw.js', {
+                const registration = await navigator.serviceWorker.register('https://68.183.142.239/python-compiler/sw.js', {
                     scope: './'
                 });
                 console.log('Service worker registered successfully:', registration);
@@ -809,7 +809,7 @@ Run your Python code to see output and interact with input() prompts here!"></te
             try {
                 // Create worker using the working-worker.js (avoids npm module compatibility issues)
                 // Add cache-busting parameter to force reload
-                const worker = new Worker('http://68.183.142.239/python-compiler/working-worker.js?v=' + Date.now());
+                const worker = new Worker('https://68.183.142.239/python-compiler/working-worker.js?v=' + Date.now());
 
                 // Set up direct worker communication instead of PyodideClient
                 worker.onmessage = function (e) {

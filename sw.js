@@ -5,13 +5,13 @@ console.log('Service worker starting...');
 
 // Import sync-message using importScripts
 try {
-  importScripts('http://68.183.142.239/python-compiler/node_modules/sync-message/dist/index.js');
+  importScripts('https://68.183.142.239/python-compiler/node_modules/sync-message/dist/index.js');
   console.log('sync-message imported successfully');
 } catch (error) {
   console.error('Failed to import sync-message:', error);
   // Try alternative path
   try {
-    importScripts('http://68.183.142.239/python-compiler/node_modules/sync-message/dist/index.js');
+    importScripts('https://68.183.142.239/python-compiler/node_modules/sync-message/dist/index.js');
     console.log('sync-message imported from root path');
   } catch (error2) {
     console.error('Failed to import sync-message from root path:', error2);
