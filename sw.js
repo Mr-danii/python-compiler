@@ -5,13 +5,13 @@ console.log('Service worker starting...');
 
 // Import sync-message using importScripts
 try {
-  importScripts('https://mr-danii.github.io/python-compiler/node_modules/sync-message/dist/index.js');
+  importScripts('https://mr-danii.github.io/python-compiler/lib/sync-message/dist/index.js');
   console.log('sync-message imported successfully');
 } catch (error) {
   console.error('Failed to import sync-message:', error);
   // Try alternative path
   try {
-    importScripts('https://mr-danii.github.io/python-compiler/node_modules/sync-message/dist/index.js');
+    importScripts('https://mr-danii.github.io/python-compiler/lib/sync-message/dist/index.js');
     console.log('sync-message imported from root path');
   } catch (error2) {
     console.error('Failed to import sync-message from root path:', error2);

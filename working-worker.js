@@ -1,10 +1,10 @@
 // Working Python Worker using npm modules with comsync
 console.log('Working worker starting...');
 
-// Import the libraries we installed via npm
-importScripts('https://mr-danii.github.io/python-compiler/node_modules/comlink/dist/umd/comlink.js');
-importScripts('https://mr-danii.github.io/python-compiler/node_modules/sync-message/dist/index.js');
-importScripts('https://mr-danii.github.io/python-compiler/node_modules/comsync/dist/index.js');
+// Import the libraries from lib folder
+importScripts('https://mr-danii.github.io/python-compiler/lib/comlink/dist/umd/comlink.js');
+importScripts('https://mr-danii.github.io/python-compiler/lib/sync-message/dist/index.js');
+importScripts('https://mr-danii.github.io/python-compiler/lib/comsync/dist/index.js');
 importScripts('https://cdn.jsdelivr.net/pyodide/v0.28.1/full/pyodide.js');
 
 console.log('Comsync libraries loaded in worker');
