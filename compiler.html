@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Compiler - Pyodide Worker Runner</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%, #f8fafc 100%);
+            color: #1e293b;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Advanced Background Effects */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 165, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .compiler-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .main-title {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 25%, #FFD700 50%, #FFA500 75%, #FFD700 100%);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            position: relative;
+            animation: gradientShift 4s ease-in-out infinite, titleGlow 3s ease-in-out infinite alternate;
+            letter-spacing: -0.02em;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @keyframes titleGlow {
+            from {
+                filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
+                transform: scale(1);
+            }
+            to {
+                filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6));
+                transform: scale(1.02);
+            }
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: #64748b;
+            margin-bottom: 40px;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .compiler-interface {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow:
+                0 25px 50px -12px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(255, 215, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .compiler-interface::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg,
+                    #FFD700 0%,
+                    #FFA500 25%,
+                    #FFD700 50%,
+                    #FFA500 75%,
+                    #FFD700 100%);
+            background-size: 200% 100%;
+            animation: shimmerFlow 3s linear infinite;
+        }
+
+        @keyframes shimmerFlow {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .controls-section {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .python-badge {
+            background: linear-gradient(135deg, #3776ab 0%, #4b8bbe 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(55, 118, 171, 0.3);
+        }
+
+        .run-button {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            border: none;
+            border-radius: 16px;
+            padding: 16px 32px;
+            color: #000000;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow:
+                0 4px 6px -1px rgba(255, 215, 0, 0.3),
+                0 2px 4px -1px rgba(255, 215, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .run-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .run-button:hover::before {
+            left: 100%;
+        }
+
+        .run-button:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow:
+                0 20px 25px -5px rgba(255, 215, 0, 0.4),
+                0 10px 10px -5px rgba(255, 215, 0, 0.3);
+            background: linear-gradient(135deg, #FFA500 0%, #FFD700 100%);
+        }
+
+        .run-button:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .run-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .editor-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        .code-panel,
+        .terminal-panel {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow:
+                0 10px 15px -3px rgba(0, 0, 0, 0.05),
+                0 4px 6px -2px rgba(0, 0, 0, 0.03),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+
+        .code-panel:hover,
+        .terminal-panel:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 20px 25px -5px rgba(0, 0, 0, 0.08),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 215, 0, 0.2);
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .terminal-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .clear-btn {
+            background: #ef4444;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .clear-btn:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .panel-title {
+            font-weight: 600;
+            color: #e67e22;
+            font-size: 1.1rem;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .code-editor,
+        .terminal-area {
+            width: 100%;
+            border: none;
+            padding: 24px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .code-editor {
+            height: 300px;
+            background: #fefefe;
+            color: #1e293b;
+        }
+
+        .terminal-area {
+            height: 300px;
+            background: #0f172a;
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .code-editor:focus {
+            box-shadow: inset 0 0 0 2px rgba(255, 215, 0, 0.2);
+            background: #ffffff;
+        }
+
+        .terminal-area:focus {
+            box-shadow: inset 0 0 0 2px rgba(16, 185, 129, 0.3);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
+            font-size: 0.95rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            color: #e67e22;
+            font-weight: 600;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 215, 0, 0.2);
+            border-top: 3px solid #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            color: #dc2626 !important;
+            font-weight: 600;
+        }
+
+        .success {
+            color: #059669 !important;
+            font-weight: 600;
+        }
+
+        /* Library Installation Buttons */
+        .library-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .library-label {
+            font-weight: bold;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .library-btn {
+            background: linear-gradient(135deg, #6f42c1, #8e44ad);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(111, 66, 193, 0.2);
+        }
+
+        .library-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(111, 66, 193, 0.3);
+            background: linear-gradient(135deg, #8e44ad, #6f42c1);
+        }
+
+        .library-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .library-btn.installed {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+        }
+
+        .library-btn.installing {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+            cursor: not-allowed;
+        }
+
+        /* Library Installation Modal */
+        .library-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .library-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .library-modal-content h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.4rem;
+        }
+
+        .library-description {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .library-modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .install-confirm-btn,
+        .install-cancel-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .install-confirm-btn {
+            background: linear-gradient(135deg, #6f42c1, #8e44ad);
+            color: white;
+        }
+
+        .install-confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(111, 66, 193, 0.3);
+        }
+
+        .install-cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .install-cancel-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        /* Floating Particles Enhanced */
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0;
+            animation: floatEnhanced 8s ease-in-out infinite;
+        }
+
+        .particle:nth-child(odd) {
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #FFD700, #FFA500);
+        }
+
+        .particle:nth-child(even) {
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, #FFA500, #FFD700);
+        }
+
+        @keyframes floatEnhanced {
+            0%, 100% {
+                transform: translateY(100vh) rotate(0deg) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(90vh) rotate(45deg) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(-10vh) rotate(315deg) scale(1);
+            }
+            100% {
+                transform: translateY(-20vh) rotate(360deg) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .editor-section {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .main-title {
+                font-size: 2.8rem;
+            }
+
+            .controls-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .code-editor,
+            .terminal-area {
+                height: 200px;
+            }
+
+            .compiler-container {
+                padding: 20px 15px;
+            }
+
+            .compiler-interface {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="floating-particles">
+        <div class="particle" style="left: 5%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 15%; animation-delay: 1.5s;"></div>
+        <div class="particle" style="left: 25%; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 35%; animation-delay: 4.5s;"></div>
+        <div class="particle" style="left: 45%; animation-delay: 6s;"></div>
+        <div class="particle" style="left: 55%; animation-delay: 7.5s;"></div>
+        <div class="particle" style="left: 65%; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 75%; animation-delay: 2.5s;"></div>
+        <div class="particle" style="left: 85%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 95%; animation-delay: 5.5s;"></div>
+    </div>
+
+    <div class="compiler-container">
+        <div class="header-section">
+            <h1 class="main-title">
+                <i class="fas fa-code"></i> Python Compiler
+            </h1>
+            <p class="subtitle">Interactive Python programming environment powered by Pyodide</p>
+        </div>
+
+        <div class="compiler-interface">
+            <div class="controls-section">
+                <div class="python-badge">
+                    <i class="fab fa-python"></i>
+                    <span>Python 3.11</span>
+                </div>
+
+                <button class="run-button" id="runButton">
+                    <i class="fas fa-play"></i>
+                    Execute Code
+                </button>
+
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <span>Processing...</span>
+                </div>
+
+                <div class="library-section">
+                    <span class="library-label">📦 Install Libraries:</span>
+                    <button class="library-btn" onclick="installLibrary('numpy', 'NumPy - Scientific Computing')">
+                        <i class="fas fa-calculator"></i> NumPy
+                    </button>
+                    <button class="library-btn" onclick="installLibrary('pandas', 'Pandas - Data Analysis')">
+                        <i class="fas fa-table"></i> Pandas
+                    </button>
+                    <button class="library-btn" onclick="installLibrary('beautifulsoup4', 'BeautifulSoup - HTML Parser')">
+                        <i class="fas fa-code"></i> BeautifulSoup
+                    </button>
+                </div>
+            </div>
+
+            <div class="editor-section">
+                <div class="code-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-code"></i>
+                        <span class="panel-title">Python Code Editor</span>
+                    </div>
+                    <textarea class="code-editor" id="codeEditor" placeholder="Write your Python code here...">print("Welcome to Syntax Scenarios")</textarea>
+                </div>
+
+                <div class="terminal-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-terminal"></i>
+                        <span class="panel-title">Terminal</span>
+                        <div class="terminal-controls">
+                            <button class="clear-btn" id="clearTerminal" title="Clear Terminal">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea class="terminal-area" id="outputArea" readonly placeholder="Terminal ready...
+Run your Python code to see output and interact with input() prompts here!"></textarea>
+                </div>
+            </div>
+
+            <div class="status-bar">
+                <div class="status-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="statusText">Ready to execute</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-clock"></i>
+                    <span id="executionTime">0.000s</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the npm modules in correct dependency order -->
+    <script src="./node_modules/comlink/dist/umd/comlink.js"></script>
+    <script src="./node_modules/sync-message/dist/index.js"></script>
+    <script src="./node_modules/comsync/dist/index.js"></script>
+    <script src="./node_modules/pyodide-worker-runner/dist/index.js"></script>
+
+    <script>
+        // Global variables
+        let client = null;
+        let isExecuting = false;
+        let currentInputResolver = null;
+
+        // DOM elements
+        const codeEditor = document.getElementById('codeEditor');
+        const outputArea = document.getElementById('outputArea');
+        const runButton = document.getElementById('runButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const statusText = document.getElementById('statusText');
+        const executionTime = document.getElementById('executionTime');
+        const clearTerminalBtn = document.getElementById('clearTerminal');
+
+        // Debug: Check what's loaded
+        console.log('Available globals:', Object.keys(window));
+        console.log('Comlink:', typeof window.Comlink);
+        console.log('syncMessage:', typeof window.syncMessage);
+        console.log('comsync:', typeof window.comsync);
+        console.log('pyodide-worker-runner:', typeof window['pyodide-worker-runner']);
+
+        // Make sure Comlink is available in all the ways pyodide-worker-runner might expect it
+        window.Comlink = window.Comlink || Comlink;
+        window.comlink = window.comlink || Comlink;
+        self.Comlink = self.Comlink || Comlink;
+
+        // Register service worker and set up comsync channel
+        let channel = null;
+
+        async function setupSyncMessage() {
+            try {
+                console.log('Setting up sync message system...');
+
+                // Register the service worker with better error handling
+                const registration = await navigator.serviceWorker.register('./sw.js', {
+                    scope: './'
+                });
+                console.log('Service worker registered successfully:', registration);
+
+                // Wait for service worker to be ready
+                await navigator.serviceWorker.ready;
+                console.log('Service worker is ready');
+
+                // Wait a bit more for the service worker to fully activate
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Create service worker channel
+                const { makeServiceWorkerChannel } = window.syncMessage;
+                channel = makeServiceWorkerChannel({
+                    timeout: 30000,
+                    baseUrl: window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/')
+                });
+                console.log('Service worker channel created:', !!channel);
+                console.log('Channel details:', channel);
+
+                // Test the channel
+                const { writeMessage } = window.syncMessage;
+                try {
+                    await writeMessage(channel, "init_test", "test_message_id");
+                    console.log('Service worker channel test successful');
+                } catch (testError) {
+                    console.warn('Service worker channel test failed, but continuing:', testError);
+                }
+
+            } catch (error) {
+                console.error('Service worker setup failed:', error);
+
+                // Fallback to SharedArrayBuffer if available
+                if (typeof SharedArrayBuffer !== "undefined") {
+                    console.log('Falling back to SharedArrayBuffer');
+                    const { makeAtomicsChannel } = window.syncMessage;
+                    channel = makeAtomicsChannel();
+                    console.log('SharedArrayBuffer channel created:', !!channel);
+                } else {
+                    console.error('No synchronous communication method available');
+                    // Still create a dummy channel to prevent errors
+                    channel = { type: 'none' };
+                }
+            }
+        }
+
+        // Initialize sync message system
+        setupSyncMessage();
+
+        // Also ensure the modules can find each other
+        console.log('Checking module dependencies:');
+        console.log('- Comlink available as window.Comlink:', !!window.Comlink);
+        console.log('- Comlink.wrap available:', !!window.Comlink?.wrap);
+        console.log('- comsync available:', !!window.comsync);
+        console.log('- syncMessage available:', !!window.syncMessage);
+        console.log('- Channel created:', !!channel);
+
+        // Get pyodide-worker-runner from global scope
+        if (!window['pyodide-worker-runner']) {
+            console.error('pyodide-worker-runner not loaded!');
+            alert('Error: pyodide-worker-runner library not loaded. Check console for details.');
+        }
+
+        const { PyodideClient } = window['pyodide-worker-runner'] || {};
+
+        // Debug: Check if PyodideClient is available
+        console.log('PyodideClient:', typeof PyodideClient);
+        console.log('Comlink.wrap:', typeof Comlink.wrap);
+
+        // Initialize PyodideClient using npm modules
+        async function initializeClient() {
+            if (client) return client;
+
+            updateStatus('Initializing Python environment...', 'info');
+            showLoadingProgress();
+            setLoadingState(true);
+
+            try {
+                // Create worker using the working-worker.js (avoids npm module compatibility issues)
+                // Add cache-busting parameter to force reload
+                const worker = new Worker('./working-worker.js?v=' + Date.now());
+
+                // Set up direct worker communication instead of PyodideClient
+                worker.onmessage = function (e) {
+                    const { type, data } = e.data;
+
+                    if (type === 'init_complete') {
+                        updateStatus('Python environment ready!', 'success');
+                        hideLoadingProgress();
+                        setLoadingState(false);
+                        console.log('Worker initialized successfully');
+                        client = { worker: worker, ready: true };
+                    }
+                    else if (type === 'input_request') {
+                        handleInputRequest(data);
+                    }
+                    else if (type === 'python_output') {
+                        // Handle Python stdout/stderr output
+                        handlePythonOutput(data);
+                    }
+                    else if (type === 'output') {
+                        handleOutput(data.parts);
+                    }
+                    else if (type === 'execution_complete') {
+                        const execTime = (Date.now() - executionStartTime) / 1000;
+                        executionTime.textContent = `${execTime.toFixed(3)}s`;
+                        updateStatus('Execution completed successfully', 'success');
+                        setLoadingState(false);
+                        isExecuting = false;
+                    }
+                    else if (type === 'execution_error') {
+                        const execTime = (Date.now() - executionStartTime) / 1000;
+                        executionTime.textContent = `${execTime.toFixed(3)}s`;
+                        
+                        // Debug: Log what we're receiving
+                        console.log('Main thread received execution_error:', data);
+                        console.log('data.error:', data?.error);
+                        console.log('data:', data);
+                        
+                        // Get the error message
+                        const errorMsg = data?.error || data || 'Unknown execution error';
+                        console.log('Final error message:', errorMsg);
+                        
+                        appendOutput(`\n❌ ERROR: ${errorMsg}\n`);
+                        updateStatus('Execution failed', 'error');
+                        setLoadingState(false);
+                        isExecuting = false;
+                    }
+                    else if (type === 'error') {
+                        updateStatus('Failed to initialize Python environment', 'error');
+                        hideLoadingProgress();
+                        setLoadingState(false);
+                        console.error('Worker error:', data?.error || 'Unknown error');
+                    }
+                };
+
+                // Initialize the worker
+                worker.postMessage({ type: 'init' });
+                client = { worker: worker, ready: false };
+
+                // Wait for initialization
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                updateStatus('Python environment ready!', 'success');
+                setLoadingState(false);
+                console.log('PyodideClient initialized successfully');
+                return client;
+
+            } catch (error) {
+                updateStatus('Failed to initialize Python environment', 'error');
+                hideLoadingProgress();
+                setLoadingState(false);
+                console.error('Initialization failed:', error);
+                throw error;
+            }
+        }
+
+        // Store current message ID for comsync coordination
+        let currentMessageId = null;
+
+        // Terminal Input State Management
+        let terminalInputMode = false;
+        let currentInputPrompt = '';
+        let currentInputLine = '';
+        let inputStartPosition = 0;
+
+        // Terminal Input Mode Functions
+        function enterTerminalInputMode(prompt, messageId) {
+            terminalInputMode = true;
+            currentInputPrompt = prompt;
+            currentMessageId = messageId;
+            currentInputLine = '';
+            
+            // Show prompt in terminal
+            appendOutput(`${prompt}`, 'prompt');
+            
+            // Store the position where input starts
+            inputStartPosition = outputArea.value.length;
+            
+            // Make terminal focusable and focus it
+            outputArea.readOnly = false;
+            outputArea.focus();
+            
+            console.log('Entered terminal input mode for:', prompt);
+        }
+
+        function exitTerminalInputMode() {
+            terminalInputMode = false;
+            currentInputPrompt = '';
+            currentInputLine = '';
+            currentMessageId = null;
+            
+            // Make terminal read-only again
+            outputArea.readOnly = true;
+            
+            console.log('Exited terminal input mode');
+        }
+
+        // Handle input requests from Python
+        function handleInputRequest(data) {
+            const { prompt, messageId } = data;
+            console.log('Handling input request with ID:', messageId, 'prompt:', prompt);
+            
+            // Switch to terminal-based input instead of modal
+            enterTerminalInputMode(prompt, messageId);
+        }
+
+        // Handle Python stdout/stderr output from Pyodide
+        function handlePythonOutput(data) {
+            const { type, text } = data;
+
+            // Filter out unwanted system messages
+            const unwantedMessages = [
+                'Loading micropip',
+                'Loaded micropip',
+                'Synchronous input function set up',
+                'Using direct Pyodide approach for input handling'
+            ];
+
+            // Skip unwanted messages
+            if (unwantedMessages.some(msg => text.includes(msg))) {
+                return;
+            }
+
+            // Skip empty messages
+            if (!text || text.trim() === '') {
+                return;
+            }
+
+            if (type === 'stdout') {
+                // Regular Python output (print statements, etc.)
+                // Ensure text ends with newline for proper formatting
+                const formattedText = text.endsWith('\n') ? text : text + '\n';
+                appendOutput(formattedText);
+            } else if (type === 'stderr') {
+                // Python errors and warnings - display in red
+                const formattedText = text.endsWith('\n') ? text : text + '\n';
+                appendOutput(`ERROR: ${formattedText}`);
+            }
+        }
+
+        // Handle output from Python (legacy function for compatibility)
+        function handleOutput(parts) {
+            for (const part of parts) {
+                if (part.type === 'stdout') {
+                    appendOutput(part.text);
+                } else if (part.type === 'stderr') {
+                    appendOutput(`ERROR: ${part.text}`);
+                } else if (part.type === 'input_prompt') {
+                    appendOutput(`> ${part.text}`);
+                } else if (part.type === 'input') {
+                    appendOutput(part.text);
+                } else if (part.type.includes('loading') || part.type.includes('loaded')) {
+                    appendOutput(`📦 ${part.type}: ${part.text}\n`);
+                }
+            }
+        }
+
+        // Main execution function using direct worker communication
+        let executionStartTime;
+
+        async function runCode() {
+            if (isExecuting) return;
+
+            const code = codeEditor.value.trim();
+            if (!code) {
+                updateStatus('Please enter some Python code', 'error');
+                return;
+            }
+
+            isExecuting = true;
+            executionStartTime = Date.now();
+
+            try {
+                if (!client || !client.ready) {
+                    await initializeClient();
+                }
+
+                clearOutput();
+                setLoadingState(true);
+                updateStatus('Executing Python code...', 'info');
+
+                // Execute Python code using direct worker communication with channel
+                client.worker.postMessage({
+                    type: 'run_code',
+                    data: {
+                        code: code,
+                        channel: channel
+                    }
+                });
+
+            } catch (error) {
+                const execTime = (Date.now() - executionStartTime) / 1000;
+                executionTime.textContent = `${execTime.toFixed(3)}s`;
+                appendOutput(`\nERROR: ${error.message}`);
+                updateStatus('Execution failed', 'error');
+                setLoadingState(false);
+                isExecuting = false;
+                console.error('Execution error:', error);
+            }
+        }
+
+        // Show input modal
+        function showInputModal(prompt) {
+            const modal = document.createElement('div');
+            modal.className = 'input-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>🐍 Python Input</h3>
+                    <p class="input-prompt">${prompt || 'Enter input:'}</p>
+                    <input type="text" class="modal-input" id="userInput" placeholder="Type here..." autofocus>
+                    <div class="modal-buttons">
+                        <button class="send-btn" onclick="sendInput()">Send</button>
+                        <button class="cancel-btn" onclick="cancelInput()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            const input = document.getElementById('userInput');
+            input.focus();
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') sendInput();
+            });
+        }
+
+        // Send input using comsync channel
+        function sendInput() {
+            const input = document.getElementById('userInput');
+            const value = input ? input.value : '';
+
+            const modal = document.querySelector('.input-modal');
+            if (modal) modal.remove();
+
+            appendOutput(value + '\n');
+
+            // Write to comsync channel using the correct message ID
+            if (channel && currentMessageId) {
+                const { writeMessage } = window.syncMessage;
+                try {
+                    writeMessage(channel, value, currentMessageId);
+                    console.log('Sent input via comsync with ID:', currentMessageId, 'value:', value);
+                    currentMessageId = null; // Clear the message ID
+                } catch (error) {
+                    console.error('Error sending input via comsync:', error);
+                }
+            }
+        }
+
+        // Cancel input using comsync channel
+        function cancelInput() {
+            const modal = document.querySelector('.input-modal');
+            if (modal) modal.remove();
+
+            // Write empty string to comsync channel using the correct message ID
+            if (channel && currentMessageId) {
+                const { writeMessage } = window.syncMessage;
+                try {
+                    writeMessage(channel, '', currentMessageId);
+                    console.log('Sent cancel via comsync with ID:', currentMessageId);
+                    currentMessageId = null; // Clear the message ID
+                } catch (error) {
+                    console.error('Error sending cancel via comsync:', error);
+                }
+            }
+        }
+
+        // Utility functions
+        function appendOutput(text) {
+            outputArea.value += text;
+            outputArea.scrollTop = outputArea.scrollHeight;
+        }
+
+        function clearOutput() {
+            outputArea.value = '';
+            executionTime.textContent = '0.000s';
+        }
+
+        function updateStatus(message, type = 'info') {
+            const icons = {
+                error: 'fas fa-exclamation-triangle',
+                success: 'fas fa-check-circle',
+                info: 'fas fa-info-circle'
+            };
+
+            statusText.innerHTML = `<i class="${icons[type]}"></i><span>${message}</span>`;
+            statusText.className = `status-item ${type}`;
+        }
+
+        function setLoadingState(loading) {
+            if (loading) {
+                loadingIndicator.style.display = 'flex';
+                runButton.disabled = true;
+            } else {
+                loadingIndicator.style.display = 'none';
+                runButton.disabled = false;
+            }
+        }
+
+        // Event listeners
+        runButton.addEventListener('click', runCode);
+        clearTerminalBtn.addEventListener('click', () => {
+            clearOutput();
+            updateStatus('Terminal cleared', 'info');
+        });
+
+        // Terminal Input Keyboard Handler
+        function handleTerminalInput(e) {
+            // Only handle input when in terminal input mode
+            if (!terminalInputMode) return;
+            
+            console.log('Terminal input key:', e.key, 'Current line:', currentInputLine);
+            
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendTerminalInput();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                handleBackspace();
+            } else if (e.key.length === 1) {
+                // Regular character input
+                e.preventDefault();
+                addCharacterToInput(e.key);
+            }
+            // Ignore other keys (arrows, ctrl, etc. for now)
+        }
+
+        function addCharacterToInput(char) {
+            currentInputLine += char;
+            updateTerminalDisplay();
+        }
+
+        function handleBackspace() {
+            if (currentInputLine.length > 0) {
+                currentInputLine = currentInputLine.slice(0, -1);
+                updateTerminalDisplay();
+            }
+        }
+
+        function updateTerminalDisplay() {
+            // Update the terminal to show current input with cursor
+            const beforeInput = outputArea.value.substring(0, inputStartPosition);
+            const inputWithCursor = currentInputLine + '█'; // Show cursor
+            outputArea.value = beforeInput + inputWithCursor;
+            outputArea.scrollTop = outputArea.scrollHeight;
+        }
+
+        function sendTerminalInput() {
+            const input = currentInputLine;
+            
+            // Update terminal to show final input (without cursor)
+            const beforeInput = outputArea.value.substring(0, inputStartPosition);
+            outputArea.value = beforeInput + input + '\n';
+            
+            console.log('Sending terminal input:', input, 'with ID:', currentMessageId);
+            
+            // Send input using existing comsync system (don't change this!)
+            if (channel && currentMessageId) {
+                const { writeMessage } = window.syncMessage;
+                try {
+                    writeMessage(channel, input, currentMessageId);
+                    console.log('Sent input via comsync with ID:', currentMessageId, 'value:', input);
+                } catch (error) {
+                    console.error('Error sending input via comsync:', error);
+                }
+            }
+            
+            // Exit terminal input mode
+            exitTerminalInputMode();
+        }
+
+        // Add keyboard event listener to terminal
+        outputArea.addEventListener('keydown', handleTerminalInput);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Don't interfere with terminal input mode
+            if (terminalInputMode) return;
+            
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                runCode();
+            }
+        });
+
+        // Library Installation System
+        const installedLibraries = new Set();
+
+        // Show library installation modal
+        function installLibrary(packageName, description) {
+            // Check if already installed
+            if (installedLibraries.has(packageName)) {
+                updateStatus(`${packageName} is already installed`, 'info');
+                return;
+            }
+
+            // Show confirmation modal
+            const modal = document.createElement('div');
+            modal.className = 'library-modal';
+            modal.innerHTML = `
+                <div class="library-modal-content">
+                    <h3>📦 Install Library</h3>
+                    <div class="library-description">
+                        <strong>${description}</strong>
+                        <br><br>
+                        This will download and install the <code>${packageName}</code> library.
+                        The installation may take a few moments depending on the library size.
+                    </div>
+                    <div class="library-modal-buttons">
+                        <button class="install-confirm-btn" onclick="confirmInstallLibrary('${packageName}', '${description}')">
+                            <i class="fas fa-download"></i> Install ${packageName}
+                        </button>
+                        <button class="install-cancel-btn" onclick="cancelInstallLibrary()">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Confirm library installation
+        async function confirmInstallLibrary(packageName, description) {
+            // Remove modal
+            const modal = document.querySelector('.library-modal');
+            if (modal) modal.remove();
+
+            // Find the button and update its state
+            const buttons = document.querySelectorAll('.library-btn');
+            let targetButton = null;
+            buttons.forEach(btn => {
+                if (btn.textContent.includes(packageName.charAt(0).toUpperCase() + packageName.slice(1))) {
+                    targetButton = btn;
+                }
+            });
+
+            try {
+                // Update button to installing state
+                if (targetButton) {
+                    targetButton.classList.add('installing');
+                    targetButton.disabled = true;
+                    targetButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Installing...`;
+                }
+
+                updateStatus(`Installing ${packageName}...`, 'info');
+                appendOutput(`\n📦 Installing ${packageName}...\n`);
+
+                // Initialize client if not ready
+                if (!client || !client.ready) {
+                    await initializeClient();
+                }
+
+                // Send installation request to worker
+                await new Promise((resolve, reject) => {
+                    const installTimeout = setTimeout(() => {
+                        reject(new Error('Installation timeout'));
+                    }, 60000); // 60 second timeout
+
+                    // Listen for installation result
+                    const originalOnMessage = client.worker.onmessage;
+                    client.worker.onmessage = function(e) {
+                        if (e.data.type === 'library_installed') {
+                            clearTimeout(installTimeout);
+                            client.worker.onmessage = originalOnMessage;
+                            resolve();
+                        } else if (e.data.type === 'library_install_error') {
+                            clearTimeout(installTimeout);
+                            client.worker.onmessage = originalOnMessage;
+                            reject(new Error(e.data.error));
+                        } else {
+                            // Pass other messages to original handler
+                            originalOnMessage(e);
+                        }
+                    };
+
+                    // Send install request
+                    client.worker.postMessage({
+                        type: 'install_library',
+                        data: { packageName: packageName }
+                    });
+                });
+
+                // Success!
+                installedLibraries.add(packageName);
+                appendOutput(`✅ ${packageName} installed successfully!\n`);
+                updateStatus(`${packageName} installed successfully`, 'success');
+
+                // Update button to installed state
+                if (targetButton) {
+                    targetButton.classList.remove('installing');
+                    targetButton.classList.add('installed');
+                    targetButton.disabled = false;
+                    targetButton.innerHTML = `<i class="fas fa-check"></i> ${packageName.charAt(0).toUpperCase() + packageName.slice(1)} ✓`;
+                }
+
+            } catch (error) {
+                console.error(`Failed to install ${packageName}:`, error);
+                appendOutput(`❌ Failed to install ${packageName}: ${error.message}\n`);
+                updateStatus(`Failed to install ${packageName}`, 'error');
+
+                // Reset button state
+                if (targetButton) {
+                    targetButton.classList.remove('installing');
+                    targetButton.disabled = false;
+                    targetButton.innerHTML = `<i class="fas fa-calculator"></i> ${packageName.charAt(0).toUpperCase() + packageName.slice(1)}`;
+                }
+            }
+        }
+
+        // Cancel library installation
+        function cancelInstallLibrary() {
+            const modal = document.querySelector('.library-modal');
+            if (modal) modal.remove();
+        }
+
+        // Loading Progress Modal Functions
+        function showLoadingProgress() {
+            // Create loading modal
+            const modal = document.createElement('div');
+            modal.id = 'pyodide-loading-modal';
+            modal.innerHTML = `
+                <div class="loading-overlay">
+                    <div class="loading-content">
+                        <div class="python-logo">🐍</div>
+                        <h3>Loading Python Environment</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <p class="loading-text">This may take 10-30 seconds on first load...</p>
+                        <small>Subsequent loads will be instant!</small>
+                    </div>
+                </div>
+            `;
+
+            // Add loading styles
+            const style = document.createElement('style');
+            style.textContent = `
+                #pyodide-loading-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .loading-content {
+                    background: white;
+                    padding: 40px;
+                    border-radius: 20px;
+                    text-align: center;
+                    max-width: 400px;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                }
+                .python-logo {
+                    font-size: 4rem;
+                    margin-bottom: 20px;
+                }
+                .loading-content h3 {
+                    margin: 0 0 20px 0;
+                    color: #2c3e50;
+                }
+                .progress-bar {
+                    width: 100%;
+                    height: 8px;
+                    background: #ecf0f1;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    margin: 20px 0;
+                }
+                .progress-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #FFD700, #FFA500);
+                    width: 0%;
+                    transition: width 0.3s ease;
+                    animation: progressPulse 2s ease-in-out infinite;
+                }
+                @keyframes progressPulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.7; }
+                }
+                .loading-text {
+                    color: #7f8c8d;
+                    margin: 15px 0 5px 0;
+                }
+            `;
+
+            document.head.appendChild(style);
+            document.body.appendChild(modal);
+
+            // Animate progress bar
+            let progress = 0;
+            const progressFill = document.getElementById('progress-fill');
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+            }, 500);
+
+            // Store interval for cleanup
+            modal.progressInterval = progressInterval;
+        }
+
+        function hideLoadingProgress() {
+            const modal = document.getElementById('pyodide-loading-modal');
+            if (modal) {
+                // Complete progress bar
+                const progressFill = document.getElementById('progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = '100%';
+                }
+
+                // Clear interval
+                if (modal.progressInterval) {
+                    clearInterval(modal.progressInterval);
+                }
+
+                // Remove modal after short delay
+                setTimeout(() => {
+                    modal.remove();
+                }, 500);
+            }
+        }
+
+        // Make functions global for modal
+        window.sendInput = sendInput;
+        window.cancelInput = cancelInput;
+        window.installLibrary = installLibrary;
+        window.confirmInstallLibrary = confirmInstallLibrary;
+        window.cancelInstallLibrary = cancelInstallLibrary;
+
+        console.log('Python Compiler initialized');
+
+        // Initialize
+        updateStatus('Python compiler ready - Click run to load Python environment');
+
+        // Start preloading Python environment in background after 2 seconds
+        setTimeout(() => {
+            if (!client || !client.ready) {
+                updateStatus('Pre-loading Python environment...', 'info');
+                initializeClient().catch(() => {
+                    updateStatus('Python compiler ready - Click run to load Python environment');
+                });
+            }
+        }, 2000);
+    </script>
+</body>
+
+</html>

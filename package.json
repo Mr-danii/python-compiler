@@ -1,0 +1,19 @@
+{
+  "name": "python_tester_input_comp_01",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "comlink": "^4.4.2",
+    "comsync": "^0.0.9",
+    "pyodide": "^0.28.1",
+    "pyodide-worker-runner": "^1.4.0",
+    "sync-message": "^0.0.12"
+  }
+}
