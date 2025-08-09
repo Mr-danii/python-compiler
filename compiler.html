@@ -69,9 +69,12 @@
         }
 
         @keyframes gradientShift {
-            0%, 100% {
+
+            0%,
+            100% {
                 background-position: 0% 50%;
             }
+
             50% {
                 background-position: 100% 50%;
             }
@@ -82,6 +85,7 @@
                 filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
                 transform: scale(1);
             }
+
             to {
                 filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6));
                 transform: scale(1.02);
@@ -131,6 +135,7 @@
             0% {
                 background-position: -200% 0;
             }
+
             100% {
                 background-position: 200% 0;
             }
@@ -358,6 +363,7 @@
             0% {
                 transform: rotate(0deg);
             }
+
             100% {
                 transform: rotate(360deg);
             }
@@ -534,18 +540,23 @@
         }
 
         @keyframes floatEnhanced {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translateY(100vh) rotate(0deg) scale(0);
                 opacity: 0;
             }
+
             10% {
                 opacity: 1;
                 transform: translateY(90vh) rotate(45deg) scale(1);
             }
+
             90% {
                 opacity: 1;
                 transform: translateY(-10vh) rotate(315deg) scale(1);
             }
+
             100% {
                 transform: translateY(-20vh) rotate(360deg) scale(0);
                 opacity: 0;
@@ -631,7 +642,8 @@
                     <button class="library-btn" onclick="installLibrary('pandas', 'Pandas - Data Analysis')">
                         <i class="fas fa-table"></i> Pandas
                     </button>
-                    <button class="library-btn" onclick="installLibrary('beautifulsoup4', 'BeautifulSoup - HTML Parser')">
+                    <button class="library-btn"
+                        onclick="installLibrary('beautifulsoup4', 'BeautifulSoup - HTML Parser')">
                         <i class="fas fa-code"></i> BeautifulSoup
                     </button>
                 </div>
@@ -643,7 +655,8 @@
                         <i class="fas fa-code"></i>
                         <span class="panel-title">Python Code Editor</span>
                     </div>
-                    <textarea class="code-editor" id="codeEditor" placeholder="Write your Python code here...">print("Welcome to Syntax Scenarios")</textarea>
+                    <textarea class="code-editor" id="codeEditor"
+                        placeholder="Write your Python code here...">print("Welcome to Syntax Scenarios")</textarea>
                 </div>
 
                 <div class="terminal-panel">
@@ -675,10 +688,10 @@ Run your Python code to see output and interact with input() prompts here!"></te
     </div>
 
     <!-- Load the npm modules in correct dependency order -->
-    <script src="./node_modules/comlink/dist/umd/comlink.js"></script>
-    <script src="./node_modules/sync-message/dist/index.js"></script>
-    <script src="./node_modules/comsync/dist/index.js"></script>
-    <script src="./node_modules/pyodide-worker-runner/dist/index.js"></script>
+    <script src="http://68.183.142.239/python-compiler/node_modules/comlink/dist/umd/comlink.js"></script>
+    <script src="http://68.183.142.239/python-compiler/node_modules/sync-message/dist/index.js"></script>
+    <script src="http://68.183.142.239/python-compiler/node_modules/comsync/dist/index.js"></script>
+    <script src="http://68.183.142.239/python-compiler/node_modules/pyodide-worker-runner/dist/index.js"></script>
 
     <script>
         // Global variables
@@ -715,7 +728,7 @@ Run your Python code to see output and interact with input() prompts here!"></te
                 console.log('Setting up sync message system...');
 
                 // Register the service worker with better error handling
-                const registration = await navigator.serviceWorker.register('./sw.js', {
+                const registration = await navigator.serviceWorker.register('http://68.183.142.239/python-compiler/sw.js', {
                     scope: './'
                 });
                 console.log('Service worker registered successfully:', registration);
@@ -796,7 +809,7 @@ Run your Python code to see output and interact with input() prompts here!"></te
             try {
                 // Create worker using the working-worker.js (avoids npm module compatibility issues)
                 // Add cache-busting parameter to force reload
-                const worker = new Worker('./working-worker.js?v=' + Date.now());
+                const worker = new Worker('http://68.183.142.239/python-compiler/working-worker.js?v=' + Date.now());
 
                 // Set up direct worker communication instead of PyodideClient
                 worker.onmessage = function (e) {
@@ -829,16 +842,16 @@ Run your Python code to see output and interact with input() prompts here!"></te
                     else if (type === 'execution_error') {
                         const execTime = (Date.now() - executionStartTime) / 1000;
                         executionTime.textContent = `${execTime.toFixed(3)}s`;
-                        
+
                         // Debug: Log what we're receiving
                         console.log('Main thread received execution_error:', data);
                         console.log('data.error:', data?.error);
                         console.log('data:', data);
-                        
+
                         // Get the error message
                         const errorMsg = data?.error || data || 'Unknown execution error';
                         console.log('Final error message:', errorMsg);
-                        
+
                         appendOutput(`\n❌ ERROR: ${errorMsg}\n`);
                         updateStatus('Execution failed', 'error');
                         setLoadingState(false);
@@ -888,17 +901,17 @@ Run your Python code to see output and interact with input() prompts here!"></te
             currentInputPrompt = prompt;
             currentMessageId = messageId;
             currentInputLine = '';
-            
+
             // Show prompt in terminal
             appendOutput(`${prompt}`, 'prompt');
-            
+
             // Store the position where input starts
             inputStartPosition = outputArea.value.length;
-            
+
             // Make terminal focusable and focus it
             outputArea.readOnly = false;
             outputArea.focus();
-            
+
             console.log('Entered terminal input mode for:', prompt);
         }
 
@@ -907,10 +920,10 @@ Run your Python code to see output and interact with input() prompts here!"></te
             currentInputPrompt = '';
             currentInputLine = '';
             currentMessageId = null;
-            
+
             // Make terminal read-only again
             outputArea.readOnly = true;
-            
+
             console.log('Exited terminal input mode');
         }
 
@@ -918,7 +931,7 @@ Run your Python code to see output and interact with input() prompts here!"></te
         function handleInputRequest(data) {
             const { prompt, messageId } = data;
             console.log('Handling input request with ID:', messageId, 'prompt:', prompt);
-            
+
             // Switch to terminal-based input instead of modal
             enterTerminalInputMode(prompt, messageId);
         }
@@ -1126,9 +1139,9 @@ Run your Python code to see output and interact with input() prompts here!"></te
         function handleTerminalInput(e) {
             // Only handle input when in terminal input mode
             if (!terminalInputMode) return;
-            
+
             console.log('Terminal input key:', e.key, 'Current line:', currentInputLine);
-            
+
             if (e.key === 'Enter') {
                 e.preventDefault();
                 sendTerminalInput();
@@ -1165,13 +1178,13 @@ Run your Python code to see output and interact with input() prompts here!"></te
 
         function sendTerminalInput() {
             const input = currentInputLine;
-            
+
             // Update terminal to show final input (without cursor)
             const beforeInput = outputArea.value.substring(0, inputStartPosition);
             outputArea.value = beforeInput + input + '\n';
-            
+
             console.log('Sending terminal input:', input, 'with ID:', currentMessageId);
-            
+
             // Send input using existing comsync system (don't change this!)
             if (channel && currentMessageId) {
                 const { writeMessage } = window.syncMessage;
@@ -1182,7 +1195,7 @@ Run your Python code to see output and interact with input() prompts here!"></te
                     console.error('Error sending input via comsync:', error);
                 }
             }
-            
+
             // Exit terminal input mode
             exitTerminalInputMode();
         }
@@ -1194,7 +1207,7 @@ Run your Python code to see output and interact with input() prompts here!"></te
         document.addEventListener('keydown', (e) => {
             // Don't interfere with terminal input mode
             if (terminalInputMode) return;
-            
+
             if (e.ctrlKey && e.key === 'Enter') {
                 e.preventDefault();
                 runCode();
@@ -1276,7 +1289,7 @@ Run your Python code to see output and interact with input() prompts here!"></te
 
                     // Listen for installation result
                     const originalOnMessage = client.worker.onmessage;
-                    client.worker.onmessage = function(e) {
+                    client.worker.onmessage = function (e) {
                         if (e.data.type === 'library_installed') {
                             clearTimeout(installTimeout);
                             client.worker.onmessage = originalOnMessage;
