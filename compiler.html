@@ -147,6 +147,7 @@
             margin-bottom: 32px;
             flex-wrap: wrap;
             align-items: center;
+            justify-content: space-between;
         }
 
         .python-badge {
@@ -342,6 +343,16 @@
             font-weight: 500;
         }
 
+        .shortcuts-hint {
+            font-size: 0.85rem;
+            color: #6b7280;
+            font-weight: 400;
+        }
+
+        .shortcuts-hint span {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
+        }
+
         .loading {
             display: none;
             align-items: center;
@@ -385,7 +396,7 @@
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            margin-top: 10px;
+            margin-left: auto;
         }
 
         .library-label {
@@ -431,6 +442,111 @@
             background: linear-gradient(135deg, #ffc107, #fd7e14);
             box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
             cursor: not-allowed;
+        }
+
+        /* Library Dropdown Styles */
+        .library-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .library-dropdown-btn {
+            background: linear-gradient(135deg, #6f42c1, #8e44ad);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(111, 66, 193, 0.2);
+        }
+
+        .library-dropdown-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(111, 66, 193, 0.3);
+            background: linear-gradient(135deg, #8e44ad, #6f42c1);
+        }
+
+        .library-dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            width: 100%;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            z-index: 1000;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .library-dropdown-content.show {
+            display: block;
+            animation: dropdownFadeIn 0.3s ease;
+        }
+
+        @keyframes dropdownFadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .library-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .library-item:last-child {
+            border-bottom: none;
+        }
+
+        .library-item:hover {
+            background: linear-gradient(135deg, #f8f9ff, #e8f0ff);
+            transform: translateX(5px);
+        }
+
+        .library-item i {
+            font-size: 1.2rem;
+            margin-right: 12px;
+            color: #6f42c1;
+            width: 20px;
+            text-align: center;
+        }
+
+        .library-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .library-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .library-desc {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        #dropdownIcon {
+            transition: transform 0.3s ease;
+        }
+
+        #dropdownIcon.rotated {
+            transform: rotate(180deg);
         }
 
         /* Library Installation Modal */
@@ -614,7 +730,7 @@
             <h1 class="main-title">
                 <i class="fas fa-code"></i> Python Compiler
             </h1>
-            <p class="subtitle">Interactive Python programming environment powered by Pyodide</p>
+            <p class="subtitle">Code, execute, and explore Python right in your browser - no installation required!</p>
         </div>
 
         <div class="compiler-interface">
@@ -635,17 +751,41 @@
                 </div>
 
                 <div class="library-section">
-                    <span class="library-label">📦 Install Libraries:</span>
-                    <button class="library-btn" onclick="installLibrary('numpy', 'NumPy - Scientific Computing')">
-                        <i class="fas fa-calculator"></i> NumPy
-                    </button>
-                    <button class="library-btn" onclick="installLibrary('pandas', 'Pandas - Data Analysis')">
-                        <i class="fas fa-table"></i> Pandas
-                    </button>
-                    <button class="library-btn"
-                        onclick="installLibrary('beautifulsoup4', 'BeautifulSoup - HTML Parser')">
-                        <i class="fas fa-code"></i> BeautifulSoup
-                    </button>
+                    <div class="library-dropdown">
+                        <button class="library-dropdown-btn" onclick="toggleLibraryDropdown()">
+                            📦 Install Libraries <i class="fas fa-chevron-down" id="dropdownIcon"></i>
+                        </button>
+                        <div class="library-dropdown-content" id="libraryDropdown">
+                            <div class="library-item" onclick="installLibrary('numpy', 'NumPy - Scientific Computing')">
+                                <i class="fas fa-calculator"></i>
+                                <div class="library-info">
+                                    <span class="library-name">NumPy</span>
+                                    <span class="library-desc">Scientific Computing</span>
+                                </div>
+                            </div>
+                            <div class="library-item" onclick="installLibrary('pandas', 'Pandas - Data Analysis')">
+                                <i class="fas fa-table"></i>
+                                <div class="library-info">
+                                    <span class="library-name">Pandas</span>
+                                    <span class="library-desc">Data Analysis</span>
+                                </div>
+                            </div>
+                            <div class="library-item" onclick="installLibrary('beautifulsoup4', 'BeautifulSoup - HTML Parser')">
+                                <i class="fas fa-code"></i>
+                                <div class="library-info">
+                                    <span class="library-name">BeautifulSoup</span>
+                                    <span class="library-desc">HTML Parser</span>
+                                </div>
+                            </div>
+                            <div class="library-item" onclick="installLibrary('matplotlib', 'Matplotlib - Data Visualization')">
+                                <i class="fas fa-chart-line"></i>
+                                <div class="library-info">
+                                    <span class="library-name">Matplotlib</span>
+                                    <span class="library-desc">Data Visualization</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -678,6 +818,10 @@ Run your Python code to see output and interact with input() prompts here!"></te
                 <div class="status-item">
                     <i class="fas fa-info-circle"></i>
                     <span id="statusText">Ready to execute</span>
+                </div>
+                <div class="status-item shortcuts-hint">
+                    <i class="fas fa-keyboard"></i>
+                    <span>Ctrl+Enter: Run Code | Ctrl+K: Clear Terminal</span>
                 </div>
                 <div class="status-item">
                     <i class="fas fa-clock"></i>
@@ -1203,6 +1347,32 @@ Run your Python code to see output and interact with input() prompts here!"></te
         // Add keyboard event listener to terminal
         outputArea.addEventListener('keydown', handleTerminalInput);
 
+        // Clear terminal function
+        function clearTerminal() {
+            clearOutput();
+            updateStatus('Terminal cleared', 'info');
+        }
+
+        // Library dropdown functionality
+        function toggleLibraryDropdown() {
+            const dropdown = document.getElementById('libraryDropdown');
+            const icon = document.getElementById('dropdownIcon');
+            
+            dropdown.classList.toggle('show');
+            icon.classList.toggle('rotated');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('libraryDropdown');
+            const button = document.querySelector('.library-dropdown-btn');
+            
+            if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+                document.getElementById('dropdownIcon').classList.remove('rotated');
+            }
+        });
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             // Don't interfere with terminal input mode
@@ -1211,6 +1381,12 @@ Run your Python code to see output and interact with input() prompts here!"></te
             if (e.ctrlKey && e.key === 'Enter') {
                 e.preventDefault();
                 runCode();
+            }
+            
+            // Clear terminal shortcut (Ctrl + K)
+            if (e.ctrlKey && (e.key === 'k' || e.key === 'K')) {
+                e.preventDefault();
+                clearTerminal();
             }
         });
 
